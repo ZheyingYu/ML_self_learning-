@@ -1,0 +1,86 @@
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+class LogisticRegression():
+    """
+        Parameters:
+        -----------
+        n_iterations: int
+            梯度下降的轮数
+        learning_rate: float
+            梯度下降学习率
+    """
+    def __init__(self, learning_rate1=.1, learning_rate2 = 0.001, n_iterations=1):
+        self.learning_rate1 = learning_rate1
+        self.learning_rate2 = learning_rate2
+        self.n_iterations = n_iterations
+        
+    def initialize_weights(self, n_features):
+        '''初始权重设置为随机初始权重，包含了偏置'''
+        limit = np.sqrt(1 / n_features)
+        w = np.random.uniform(-limit, limit, (n_features, 1))
+        #把偏置加到w的矩阵中
+        b = 0
+        self.w = np.insert(w, 0, b, axis=0)
+    
+    #梯度下降法
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.initialize_weights(n_features)
+        #x要加多1列才能保持输出shape不变
+        X = np.insert(X, 0, 1, axis=1)
+        y = np.reshape(y, (n_samples, 1))
+           
+        for i in range(self.n_iterations):
+            h = X.dot(self.w) #点乘积
+            y_pred = sigmoid(h)
+            #公式推倒后的J(w)的梯度，即新的w参数为 w-learning_rate * (y_pred - y)
+            w_grad = X.T.dot(y_pred - y) #梯度(点乘积已经做到求和的效果)
+            self.w = self.w - self.learning_rate * w_grad #经过循环后会保留最新权重的值
+            
+        return self.w
+    
+    #随机梯度下降法
+    def SGD_fit(self, X, y):
+        '''随机梯度下降法：每次只代入一个样本，只更新该样本的权重'''
+        n_samples, n_features = X.shape
+        #self.initialize_weights(n_features)
+        X = np.insert(X, 0, 1, axis=1)
+        y = np.reshape(y, (n_samples, 1))
+        
+        #遍历所有样本
+        for i in range(n_samples): 
+            h = X[i].dot(self.w)
+            y_pred = sigmoid(h)
+            w_grad = (y_pred - y[i]) *X[i]
+            self.w = self.w.T - self.learning_rate1 * w_grad  #注意数据结构，确保最后w结构为（20.1）
+            self.w = self.w.reshape(-1, 1)
+            
+    #小批量梯度下降法
+    def minibatchGD_fit(self, X, y, mini_batchsize): 
+        '''小批次梯度下降法, 一次代入mini_batchsize个样本'''
+        n_samples, n_features = X.shape
+        self.initialize_weights(n_features)
+        X = np.insert(X, 0, 1, axis=1)
+        y = np.reshape(y, (n_samples, 1))
+        
+        for i in range(0, X.shape[0], mini_batchsize):
+            h = X[i:i+mini_batchsize].dot(self.w)
+            y_pred = sigmoid(h)
+            w_grad = (y_pred - y[i:i+mini_batchsize]).T.dot(X[i:i+mini_batchsize]) / mini_batchsize
+            self.w = self.w.T - self.learning_rate2* w_grad
+            self.w = self.w.reshape(-1, 1)
+        
+        
+    def predict(self, X, theshold):
+        '''自己设置阈值'''
+        X = np.insert(X, 0, 1, axis = 1)
+        #np.round四舍五入,小于0.5等于0,大于0.5等于1
+        y_pred = sigmoid(X.dot(self.w))
+        for i in range(0, y_pred.shape[0]): 
+            if y_pred[i] > theshold: 
+                y_pred[i] = 1
+            else: 
+                y_pred[i] = 0
+        return y_pred
