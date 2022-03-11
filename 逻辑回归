@@ -84,3 +84,20 @@ class LogisticRegression():
             else: 
                 y_pred[i] = 0
         return y_pred
+        
+        
+        
+if __name__ == '__main__':
+    
+    
+    X_train, X_test, y_train, y_test = train_test_split(np.array(pd.get_dummies(X_data)), np.array(y_data), test_size=0.33, random_state = 1)
+
+    clf = LogisticRegression(learning_rate1=.01, n_iterations=1400)
+    clf.minibatchGD_fit(X_train, y_train,10)
+    y_pred = clf.predict(X_test, 0.6)
+    y_pred = np.reshape(y_pred, y_test.shape)
+
+    precision = precision_score(y_test, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
+    print('precision', precision)
+    print('accuracy', accuracy)
